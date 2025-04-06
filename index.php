@@ -9,7 +9,7 @@ $db = new SQLite3("database/database.sqlite");
     <div class="container flex flex-col px-5 mt-8 pb-4 mx-auto">
         <p class="-ml-4 my-4">Travel around the best islands in the world hassle free with us. We offer various services from booking flights,hotels and visa services. All our island tours come with full boarded meals and tour guides. </p>
         <div class="flex flex-col -ml-4 lg:w-1/3">
-            <input name="search" type="text" class="border-2 border-gray-200 p-2 rounded-lg" placeholder="Search Places"/>
+            <input name="search" type="text" class="border-2 border-gray-200 p-2 bg-white rounded-lg" placeholder="Search Places"/>
         </div>
 
         <div class="grid lg:grid-cols-3 mt-4 gap-4 -m-4">
