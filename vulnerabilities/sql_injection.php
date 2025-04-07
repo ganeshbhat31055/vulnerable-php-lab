@@ -3,11 +3,8 @@
 // This file demonstrates a basic SQL injection vulnerability
 // No other functionality is included to keep the demo focused
 
-// Create a simple SQLite database for this demo
-$db = new SQLite3(':memory:');
-$db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)');
-$db->exec("INSERT INTO users (username, password) VALUES ('admin', 'admin123')");
-$db->exec("INSERT INTO users (username, password) VALUES ('user', 'password123')");
+// Use the existing database file
+$db = new SQLite3("database/database.sqlite");
 
 $message = '';
 
@@ -47,17 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="instructions">
             <h2>Instructions:</h2>
             <p>This is a demo of SQL injection vulnerability. Try to bypass the login using SQL injection.</p>
-            <p>Valid credentials:</p>
-            <ul>
-                <li>Username: admin, Password: admin123</li>
-                <li>Username: user, Password: password123</li>
-            </ul>
             <p>Try these SQL injection payloads:</p>
             <ul>
                 <li>Username: admin' --</li>
                 <li>Username: ' OR '1'='1</li>
                 <li>Username: ' UNION SELECT 1,2,3 --</li>
             </ul>
+            <p>Note: This demo uses the project's actual database file (database.sqlite).</p>
         </div>
 
         <?php if ($message): ?>
