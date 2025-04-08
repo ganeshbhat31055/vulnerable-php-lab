@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $db->query($query);
     
     if ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-        $message = "Login successful! Welcome, " . htmlspecialchars($row['username']);
+        $message = "Login successful! Welcome, " . htmlspecialchars($row['name']);
     } else {
         $message = "Login failed!";
     }
@@ -35,6 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group { margin-bottom: 15px; }
         input { padding: 8px; width: 200px; }
         button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; }
+        .user-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .user-table th, .user-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .user-table th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
@@ -44,11 +47,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="instructions">
             <h2>Instructions:</h2>
             <p>This is a demo of SQL injection vulnerability. Try to bypass the login using SQL injection.</p>
-            <p>Try these SQL injection payloads:</p>
+            
+            <h3>Valid Test Users:</h3>
+            <table class="user-table">
+                <tr>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Name</th>
+                </tr>
+                <tr>
+                    <td>admin</td>
+                    <td>admin</td>
+                    <td>Administrator</td>
+                </tr>
+                <tr>
+                    <td>user1</td>
+                    <td>password1</td>
+                    <td>Test User 1</td>
+                </tr>
+                <tr>
+                    <td>user2</td>
+                    <td>password2</td>
+                    <td>Test User 2</td>
+                </tr>
+                <tr>
+                    <td>guest</td>
+                    <td>guest123</td>
+                    <td>Guest User</td>
+                </tr>
+            </table>
+
+            <h3>SQL Injection Payloads to Try:</h3>
             <ul>
-                <li>Username: admin' --</li>
-                <li>Username: ' OR '1'='1</li>
-                <li>Username: ' UNION SELECT 1,2,3 --</li>
+                <li>Username: <code>admin' --</code> (Bypass password check)</li>
+                <li>Username: <code>' OR '1'='1</code> (Always true condition)</li>
+                <li>Username: <code>' UNION SELECT 1,2,3,4 --</code> (Union-based injection)</li>
+                <li>Username: <code>' OR 1=1; --</code> (Alternative true condition)</li>
             </ul>
             <p>Note: This demo uses the project's actual database file (database.sqlite).</p>
         </div>
