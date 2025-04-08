@@ -1,22 +1,37 @@
 <?php
-include '../header.php';
-include '../config.php';
+include 'header.php';
+include 'config.php';
 
-// Check if user is admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
+// Check if user is logged in
+if (!isset($_SESSION['id'])) {
+    header("Location: login.php");
     exit();
 }
 
-$db = new SQLite3("../database/database.sqlite");
+$db = new SQLite3("database/database.sqlite");
+$user_id = $_SESSION['id'];
+$is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
 
-// Get all bookings with user and place details
-$query = "SELECT b.*, u.username, u.name as user_name, p.name as place_name 
-          FROM bookings b 
-          JOIN users u ON b.user_id = u.id 
-          JOIN places p ON b.place_id = p.id 
-          ORDER BY b.booking_date DESC";
-$result = $db->query($query);
+// Build query based on user role
+if ($is_admin) {
+    // Admin sees all bookings
+    $query = "SELECT b.*, u.username, u.name as user_name, p.name as place_name 
+              FROM bookings b 
+              JOIN users u ON b.user_id = u.id 
+              JOIN places p ON b.place_id = p.id 
+              ORDER BY b.booking_date DESC";
+    $result = $db->query($query);
+} else {
+    // Regular users see only their bookings
+    $query = "SELECT b.*, p.name as place_name 
+              FROM bookings b 
+              JOIN places p ON b.place_id = p.id 
+              WHERE b.user_id = :user_id 
+              ORDER BY b.booking_date DESC";
+    $stmt = $db->prepare($query);
+    $stmt->bindParam(':user_id', $user_id);
+    $result = $stmt->execute();
+}
 ?>
 
 <!DOCTYPE html>
@@ -24,16 +39,27 @@ $result = $db->query($query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Bookings</title>
+    <title><?php echo $is_admin ? 'All Bookings' : 'My Bookings'; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br overflow-y-scroll min-h-screen max-w-7xl mx-auto from-blue-50 to-blue-400">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-8">All Bookings</h1>
-        
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold"><?php echo $is_admin ? 'All Bookings' : 'My Bookings'; ?></h1>
+            <?php if ($is_admin): ?>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">Admin View</span>
+            <?php endif; ?>
+        </div>
+
         <?php if (isVulnerabilityEnabled('sql_injection')): ?>
         <div class="bg-yellow-100 p-4 rounded-lg mb-4">
-            <p class="text-sm">SQL Injection is enabled. Try to find the admin flag!</p>
+            <p class="text-sm">
+                <?php if ($is_admin): ?>
+                    SQL Injection is enabled. The flag is hidden in the admin's bookings!
+                <?php else: ?>
+                    SQL Injection is enabled. Try to find a way to see all bookings!
+                <?php endif; ?>
+            </p>
         </div>
         <?php endif; ?>
 
@@ -42,18 +68,24 @@ $result = $db->query($query);
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
+                        <?php if ($is_admin): ?>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <?php endif; ?>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Place</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <?php if ($is_admin): ?>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flag</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <?php while ($row = $result->fetchArray(SQLITE3_ASSOC)): ?>
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($row['id']); ?></td>
+                        <?php if ($is_admin): ?>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($row['user_name']); ?></td>
+                        <?php endif; ?>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($row['place_name']); ?></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($row['booking_date']); ?></td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -63,6 +95,7 @@ $result = $db->query($query);
                                 <?php echo htmlspecialchars($row['status']); ?>
                             </span>
                         </td>
+                        <?php if ($is_admin): ?>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <?php 
                             if ($row['user_id'] === 1) { // Admin's booking
@@ -70,6 +103,7 @@ $result = $db->query($query);
                             }
                             ?>
                         </td>
+                        <?php endif; ?>
                     </tr>
                     <?php endwhile; ?>
                 </tbody>
