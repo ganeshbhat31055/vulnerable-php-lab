@@ -1,4 +1,6 @@
 <?php include 'header.php';
+include 'config.php';
+
 $db = new SQLite3("database/database.sqlite");
 $message = '';
 
@@ -6,10 +8,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    // VULNERABLE CODE - This is intentionally vulnerable to SQL injection
-    // DO NOT USE THIS IN PRODUCTION
-    $query = "SELECT * FROM users WHERE username = '$username' AND password = '$password' LIMIT 1";
-    $result = $db->query($query);
+    if (isVulnerabilityEnabled('sql_injection')) {
+        // VULNERABLE CODE - This is intentionally vulnerable to SQL injection
+        // DO NOT USE THIS IN PRODUCTION
+        $query = "SELECT * FROM users WHERE username = '$username' AND password = '$password' LIMIT 1";
+        $result = $db->query($query);
+    } else {
+        // SECURE CODE - Using prepared statements
+        $query = $db->prepare('SELECT * FROM users WHERE username = :username AND password = :password LIMIT 1');
+        $query->bindParam(':username', $username);
+        $query->bindParam(':password', $password);
+        $result = $query->execute();
+    }
+    
     $row = $result->fetchArray(SQLITE3_ASSOC);
     
     if(!$row){
@@ -52,8 +63,9 @@ if (isset($_SESSION['id'])){
             </div>
         <?php endif; ?>
 
+        <?php if (isVulnerabilityEnabled('sql_injection')): ?>
         <div class="mt-4 bg-yellow-100 p-4 rounded-lg">
-            <h3 class="font-semibold mb-2">SQL Injection Demo</h3>
+            <h3 class="font-semibold mb-2">SQL Injection Demo (Enabled)</h3>
             <p class="text-sm mb-2">Try these SQL injection payloads:</p>
             <ul class="list-disc pl-5 text-sm">
                 <li>Username: <code>admin' --</code> (Bypass password)</li>
@@ -61,6 +73,7 @@ if (isset($_SESSION['id'])){
                 <li>Username: <code>' UNION SELECT 1,2,3,4 --</code> (Union injection)</li>
             </ul>
         </div>
+        <?php endif; ?>
 
         <form action="" method="post" enctype="multipart/form-data" class="mt-4">
             <div class="mt-4 flex flex-col space-y-4">
@@ -76,12 +89,14 @@ if (isset($_SESSION['id'])){
             </div>
         </form>
 
+        <?php if (isVulnerabilityEnabled('sql_injection')): ?>
         <div class="mt-4 bg-red-100 p-4 rounded-lg">
             <h3 class="font-semibold mb-2">Vulnerable Code:</h3>
             <pre class="bg-white p-2 rounded text-sm overflow-x-auto">
 $query = "SELECT * FROM users WHERE username = '$username' AND password = '$password' LIMIT 1";</pre>
             <p class="text-sm mt-2">This code is vulnerable to SQL injection because it directly concatenates user input into the SQL query.</p>
         </div>
+        <?php endif; ?>
     </div>
 </div>
 </body>
