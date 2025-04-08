@@ -46,9 +46,12 @@ if ($is_admin) {
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold"><?php echo $is_admin ? 'All Bookings' : 'My Bookings'; ?></h1>
-            <?php if ($is_admin): ?>
-                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">Admin View</span>
-            <?php endif; ?>
+            <div class="flex items-center space-x-4">
+                <?php if ($is_admin): ?>
+                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">Admin View</span>
+                <?php endif; ?>
+                <a href="logout.php" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+            </div>
         </div>
 
         <?php if (isVulnerabilityEnabled('sql_injection')): ?>

@@ -1,11 +1,19 @@
 <?php
 session_start();
-if (isset($_SESSION['id'])){
-    session_unset();
-    session_destroy();
+
+// Unset all session variables
+$_SESSION = array();
+
+// Destroy the session cookie
+if (isset($_COOKIE[session_name()])) {
+    setcookie(session_name(), '', time() - 3600, '/');
 }
 
-header("Location: index.php");
+// Destroy the session
+session_destroy();
+
+// Redirect to login page
+header("Location: login.php");
 exit();
 
 
