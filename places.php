@@ -1,101 +1,118 @@
-<?php
-include 'header.php';
-include 'config.php';
+<!DOCTYPE html>
+<?php include 'header.php'; ?>
+<html lang="en">
+<body class="bg-gradient-to-br overflow-y-scroll min-h-screen max-w-7xl mx-auto from-blue-50 to-blue-400">
 
-// Check if user is logged in
-if (!isset($_SESSION['id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-$db = new SQLite3("database/database.sqlite");
-
-// Get all places from database
-$query = "SELECT * FROM places ORDER BY name";
-$result = $db->query($query);
-
-// Handle file inclusion
-$message = '';
-if (isset($_GET['view'])) {
-    $file = $_GET['view'];
-    
-    if (isVulnerabilityEnabled('lfi')) {
-        // VULNERABLE CODE - Direct file inclusion without proper validation
-        $file_path = 'places/' . $file;
-        if (file_exists($file_path)) {
-            include $file_path;
-        } else {
-            $message = '<div class="bg-red-100 p-4 rounded-lg mb-4">Destination details not found.</div>';
-        }
-    } else {
-        // SECURE CODE - Only allow specific files
-        $allowed_files = ['bali.txt', 'seychelles.txt', 'bora_bora.txt', 'anguilla.txt', 'aruba.txt'];
-        if (in_array($file, $allowed_files)) {
-            $file_path = 'places/' . $file;
-            if (file_exists($file_path)) {
-                include $file_path;
+<section class="text-gray-600 body-font">
+    <div class="container px-5 py-8 mx-auto">
+        <?php
+        // Check if search parameter exists
+        if (isset($_GET['search'])) {
+            $search = $_GET['search'];
+            
+            // Display educational message about SQL injection
+            if (isVulnerabilityEnabled('sql_injection')) {
+                echo '<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                    <p class="font-bold">SQL Injection Vulnerability Enabled</p>
+                    <p>Try to use sqlmap to extract data from the database!</p>
+                    <p class="text-sm mt-2">Hint: There might be a flags table somewhere...</p>
+                    <p class="text-sm">Example sqlmap command:</p>
+                    <code class="block bg-yellow-50 p-2 mt-1">sqlmap -u "http://your-site/places.php?search=test" --batch --dbs</code>
+                </div>';
+                
+                // Vulnerable query - direct concatenation
+                $query = "SELECT name, description FROM places WHERE name LIKE '%" . $search . "%'";
             } else {
-                $message = '<div class="bg-red-100 p-4 rounded-lg mb-4">Destination details not found.</div>';
+                // Secure query - using prepared statements
+                $query = "SELECT name, description FROM places WHERE name LIKE :search";
+            }
+            
+            try {
+                $db = new SQLite3("database/database.sqlite");
+                
+                if (isVulnerabilityEnabled('sql_injection')) {
+                    $result = $db->query($query);
+                } else {
+                    $stmt = $db->prepare($query);
+                    $stmt->bindValue(':search', '%' . $search . '%', SQLITE3_TEXT);
+                    $result = $stmt->execute();
+                }
+                
+                echo '<div class="bg-white rounded-lg shadow-lg p-6">';
+                echo '<h2 class="text-2xl font-bold mb-4">Search Results</h2>';
+                
+                while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                    echo '<div class="mb-4 p-4 border rounded">';
+                    echo '<h3 class="text-xl font-semibold">' . htmlspecialchars($row['name']) . '</h3>';
+                    echo '<p class="mt-2">' . htmlspecialchars($row['description']) . '</p>';
+                    echo '</div>';
+                }
+                
+                echo '</div>';
+                
+            } catch (Exception $e) {
+                echo '<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                    <p class="font-bold">Error</p>
+                    <p>An error occurred while searching.</p>
+                </div>';
+            }
+        }
+        ?>
+        
+        <!-- Search Form -->
+        <div class="mb-8">
+            <form class="flex gap-4 items-center justify-center">
+                <input type="text" name="search" placeholder="Search places..." 
+                       class="px-4 py-2 border rounded-lg w-full max-w-md"
+                       value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                <button type="submit" 
+                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                    Search
+                </button>
+            </form>
+        </div>
+        
+        <?php
+        // Original LFI vulnerability code
+        if (isset($_GET['view'])) {
+            $file = $_GET['view'];
+            $base_dir = 'places/';
+            $full_path = $base_dir . $file;
+            
+            // Display educational message about LFI
+            if (isVulnerabilityEnabled('lfi')) {
+                echo '<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+                    <p class="font-bold">Local File Inclusion (LFI) Demo Enabled</p>
+                    <p>Try to find the hidden flag by exploring different file paths!</p>
+                    <p class="text-sm mt-2">Hint: The flag is in a configuration file...</p>
+                </div>';
+            }
+
+            if (file_exists($full_path) && strpos(realpath($full_path), realpath($base_dir)) === 0) {
+                echo '<div class="bg-white rounded-lg shadow-lg p-6">';
+                echo '<h1 class="text-3xl font-bold mb-4">' . ucwords(str_replace('_', ' ', basename($file, '.txt'))) . '</h1>';
+                echo '<div class="prose max-w-none">';
+                echo nl2br(file_get_contents($full_path));
+                echo '</div>';
+                echo '</div>';
+            } else {
+                echo '<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                    <p class="font-bold">Error</p>
+                    <p>Place details not found. Please try again.</p>
+                </div>';
             }
         } else {
-            $message = '<div class="bg-red-100 p-4 rounded-lg mb-4">Invalid destination selected.</div>';
+            // If no view parameter is provided
+            echo '<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+                <p class="font-bold">No Place Selected</p>
+                <p>Please select a place to view its details.</p>
+            </div>';
         }
-    }
-}
-?>
-
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Explore Destinations</h1>
-
-    <?php if (isVulnerabilityEnabled('lfi')): ?>
-    <div class="bg-yellow-100 p-4 rounded-lg mb-4">
-        <h3 class="font-semibold mb-2">LFI Vulnerability (Enabled)</h3>
-        <p class="text-sm mb-2">Try these file paths:</p>
-        <ul class="list-disc pl-5 text-sm">
-            <li><code>../../../../etc/passwd</code></li>
-            <li><code>../../../../etc/hosts</code></li>
-            <li><code>../../../../var/log/apache2/access.log</code></li>
-            <li><code>../../../../var/log/auth.log</code></li>
-        </ul>
+        ?>
     </div>
-    <?php endif; ?>
+</section>
 
-    <?php echo $message; ?>
+<div class="hidden">ELE{LFI_Fl@g_1s_H3r3}</div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <?php while ($place = $result->fetchArray(SQLITE3_ASSOC)): ?>
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <?php if ($place['image']): ?>
-            <img src="<?php echo htmlspecialchars($place['image']); ?>" alt="<?php echo htmlspecialchars($place['name']); ?>" class="w-full h-48 object-cover">
-            <?php endif; ?>
-            <div class="p-6">
-                <h2 class="text-xl font-semibold mb-2"><?php echo htmlspecialchars($place['name']); ?></h2>
-                <p class="text-gray-600 mb-2"><?php echo htmlspecialchars($place['description']); ?></p>
-                <p class="text-sm text-gray-500 mb-4">Region: <?php echo htmlspecialchars($place['region']); ?></p>
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold">$<?php echo htmlspecialchars($place['price']); ?> per night</span>
-                    <a href="?view=<?php echo urlencode(strtolower(str_replace(' ', '_', $place['name'])) . '.txt'); ?>" 
-                       class="inline-block bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                        View Details
-                    </a>
-                </div>
-            </div>
-        </div>
-        <?php endwhile; ?>
-    </div>
-
-    <?php if (isVulnerabilityEnabled('lfi')): ?>
-    <div class="mt-8 bg-red-100 p-4 rounded-lg">
-        <h3 class="font-semibold mb-2">Vulnerable Code:</h3>
-        <pre class="bg-white p-2 rounded text-sm overflow-x-auto">
-$file_path = 'places/' . $file;
-if (file_exists($file_path)) {
-    include $file_path;
-}</pre>
-        <p class="text-sm mt-2">This code is vulnerable to Local File Inclusion because it doesn't properly validate the file path, allowing access to sensitive system files.</p>
-    </div>
-    <?php endif; ?>
-</div>
-</div>
 </body>
 </html> 
