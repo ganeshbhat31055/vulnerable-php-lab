@@ -49,6 +49,14 @@ if ($is_admin) {
 </div>
 <?php endif; ?>
 
+<?php if (isVulnerabilityEnabled('csrf')): ?>
+<div class="bg-yellow-100 p-4 rounded-lg mb-4">
+    <p class="text-sm">
+        CSRF is enabled. Try to create a malicious page that can modify bookings!
+    </p>
+</div>
+<?php endif; ?>
+
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -80,6 +88,16 @@ if ($is_admin) {
                             ($row['status'] === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'); ?>">
                         <?php echo htmlspecialchars($row['status']); ?>
                     </span>
+                    <?php if ($row['status'] === 'Confirmed'): ?>
+                    <form method="POST" class="inline">
+                        <input type="hidden" name="booking_id" value="<?php echo $row['id']; ?>">
+                        <input type="hidden" name="action" value="cancel">
+                        <?php if (!isVulnerabilityEnabled('csrf')): ?>
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <?php endif; ?>
+                        <button type="submit" class="ml-2 text-red-600 hover:text-red-900">Cancel</button>
+                    </form>
+                    <?php endif; ?>
                 </td>
                 <?php if ($is_admin): ?>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -95,6 +113,35 @@ if ($is_admin) {
         </tbody>
     </table>
 </div>
+
+<?php
+// Check if booking modification request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['booking_id']) && isset($_POST['action'])) {
+    $booking_id = $_POST['booking_id'];
+    $action = $_POST['action'];
+    
+    if (isVulnerabilityEnabled('csrf')) {
+        // VULNERABLE CODE - No CSRF protection
+        if ($action === 'cancel') {
+            $query = "UPDATE bookings SET status = 'Cancelled' WHERE id = :booking_id";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':booking_id', $booking_id);
+            $stmt->execute();
+        }
+    } else {
+        // SECURE CODE - With CSRF protection
+        if (isset($_POST['csrf_token']) && $_POST['csrf_token'] === $_SESSION['csrf_token']) {
+            if ($action === 'cancel') {
+                $query = "UPDATE bookings SET status = 'Cancelled' WHERE id = :booking_id AND user_id = :user_id";
+                $stmt = $db->prepare($query);
+                $stmt->bindParam(':booking_id', $booking_id);
+                $stmt->bindParam(':user_id', $user_id);
+                $stmt->execute();
+            }
+        }
+    }
+}
+?>
 </div>
 </body>
 </html> 

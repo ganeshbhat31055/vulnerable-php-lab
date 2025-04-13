@@ -1,6 +1,7 @@
 <?php 
 session_start();
 include 'config.php';
+include 'header.php';
 
 $db = new SQLite3("database/database.sqlite");
 $message = '';
@@ -33,13 +34,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     if(!$row){
         $message = '<p class="text-red-500">Login failed</p>';
     } else {
+
+        echo $row['username'];
         // Set session variables
         $_SESSION['id'] = $row['id'];
         $_SESSION['username'] = $row['username'];
         $_SESSION['name'] = $row['name'];
         
         // Set role based on username
-        if ($username === 'admin') {
+        if ($_SESSION['username'] === 'admin') {
             $_SESSION['role'] = 'admin';
         } else {
             $_SESSION['role'] = 'user';

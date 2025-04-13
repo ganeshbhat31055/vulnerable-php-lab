@@ -36,10 +36,10 @@ $db = new SQLite3("database/database.sqlite");
                                 </span>
                         </div>
                         <div class="mt-5 inline-flex lg:justify-end">
-                            <form method="POST" action="user/bookings.php">
-                                <button type="submit" class="inline-flex text-gray-200 items-center bg-blue-600 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 hover:text-base rounded text-base mt-4 md:mt-0">Book Now
-                                </button>
-                            </form>
+                            <a href="places.php?view=<?php echo urlencode(strtolower(str_replace(' ', '_', $row['name'])) . '.txt'); ?>" 
+                               class="inline-flex text-gray-200 items-center bg-blue-600 border-0 py-1 px-3 focus:outline-none hover:bg-gray-300 hover:text-base rounded text-base mt-4 md:mt-0">
+                                View Details
+                            </a>
                         </div>
                     </div>
                 </div>
