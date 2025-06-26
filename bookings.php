@@ -37,17 +37,6 @@ if ($is_admin) {
     <h1 class="text-3xl font-bold"><?php echo $is_admin ? 'All Bookings' : 'My Bookings'; ?></h1>
 </div>
 
-<?php if (isVulnerabilityEnabled('sql_injection')): ?>
-<div class="bg-yellow-100 p-4 rounded-lg mb-4">
-    <p class="text-sm">
-        <?php if ($is_admin): ?>
-            SQL Injection is enabled. The flag is hidden in the admin's bookings!
-        <?php else: ?>
-            SQL Injection is enabled. Try to find a way to see all bookings!
-        <?php endif; ?>
-    </p>
-</div>
-<?php endif; ?>
 
 <?php if (isVulnerabilityEnabled('csrf')): ?>
 <div class="bg-yellow-100 p-4 rounded-lg mb-4">

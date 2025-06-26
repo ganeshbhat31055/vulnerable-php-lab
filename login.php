@@ -60,7 +60,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Adventures - Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="css/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br overflow-y-scroll h-screen max-w-7xl mx-auto from-blue-50 to-blue-400">
 <div class="px-8 py-8 flex lg:w-1/2">
@@ -86,6 +86,11 @@ if($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             </div>
         </form>
+        <?php if (function_exists('isRegisterEnabled') && isRegisterEnabled()): ?>
+        <div class="mt-4">
+            <a href="register.php" class="text-blue-600 underline">Register a new account</a>
+        </div>
+        <?php endif; ?>
 
     </div>
 </div>

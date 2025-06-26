@@ -12,13 +12,6 @@
             
             // Display educational message about SQL injection
             if (isVulnerabilityEnabled('sql_injection')) {
-                echo '<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                    <p class="font-bold">SQL Injection Vulnerability Enabled</p>
-                    <p>Try to use sqlmap to extract data from the database!</p>
-                    <p class="text-sm mt-2">Hint: There might be a flags table somewhere...</p>
-                    <p class="text-sm">Example sqlmap command:</p>
-                    <code class="block bg-yellow-50 p-2 mt-1">sqlmap -u "http://your-site/places.php?search=test" --batch --dbs</code>
-                </div>';
                 
                 // Vulnerable query - direct concatenation
                 $query = "SELECT name, description FROM places WHERE name LIKE '%" . $search . "%'";
@@ -79,15 +72,6 @@
             $base_dir = 'places/';
             $full_path = $base_dir . $file;
             
-            // Display educational message about LFI
-            if (isVulnerabilityEnabled('lfi')) {
-                echo '<div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
-                    <p class="font-bold">Local File Inclusion (LFI) Demo Enabled</p>
-                    <p>Try to find the hidden flag by exploring different file paths!</p>
-                    <p class="text-sm mt-2">Hint: The flag is in a configuration file...</p>
-                </div>';
-            }
-
             if (file_exists($full_path) && strpos(realpath($full_path), realpath($base_dir)) === 0) {
                 echo '<div class="bg-white rounded-lg shadow-lg p-6">';
                 echo '<h1 class="text-3xl font-bold mb-4">' . ucwords(str_replace('_', ' ', basename($file, '.txt'))) . '</h1>';
@@ -103,16 +87,10 @@
             }
         } else {
             // If no view parameter is provided
-            echo '<div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-                <p class="font-bold">No Place Selected</p>
-                <p>Please select a place to view its details.</p>
-            </div>';
         }
         ?>
     </div>
 </section>
-
-<div class="hidden">ELE{LFI_Fl@g_1s_H3r3}</div>
 
 </body>
 </html> 
