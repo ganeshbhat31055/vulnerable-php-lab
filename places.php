@@ -11,7 +11,7 @@
             $search = $_GET['search'];
             
             // Display educational message about SQL injection
-            if (isVulnerabilityEnabled('sql_injection')) {
+            if (isVulnerabilityEnabled('sql_injection_places')) {
                 
                 // Vulnerable query - direct concatenation
                 $query = "SELECT name, description FROM places WHERE name LIKE '%" . $search . "%'";
@@ -23,7 +23,7 @@
             try {
                 $db = new SQLite3("database/database.sqlite");
                 
-                if (isVulnerabilityEnabled('sql_injection')) {
+                if (isVulnerabilityEnabled('sql_injection_places')) {
                     $result = $db->query($query);
                 } else {
                     $stmt = $db->prepare($query);
